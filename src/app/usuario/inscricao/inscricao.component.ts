@@ -1,13 +1,16 @@
-import { Component, OnInit, AfterViewInit, ViewChildren, ElementRef, ViewContainerRef } from '@angular/core';
-import {ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormControlName, FormControl } from '@angular/forms';
+import { Component, OnInit, AfterViewInit, ViewChildren, ElementRef } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, FormControlName, FormControl } from '@angular/forms';
 
-
+import { Observable } from 'rxjs';
+import { fromEvent } from 'rxjs';
+import { merge } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 import { Organizador } from 'src/app/usuario/organizador';
-import {CustomValidators, CustomFormsModule} from 'ng2-validation';
+import {CustomValidators} from 'ng2-validation';
 import { GenericValidartor } from '../../utils/generic-form-validator';
-import {Observable} from "rxjs";
-
+import { Router } from '@angular/router';
+import { OrganizadorService } from '../organizador.service';
 
 
 
@@ -23,7 +26,9 @@ export class InscricaoComponent implements OnInit, AfterViewInit {
   public inscricaoForm: FormGroup;
   public organizador: Organizador;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private router: Router,
+              private organizadorServive: OrganizadorService) {
     this.validationMessages = {
       nome:{
         required: 'O Nome é requerido.',
@@ -32,7 +37,7 @@ export class InscricaoComponent implements OnInit, AfterViewInit {
       },
       cpf:{
         required: 'Informe o CPF',
-        rangeLength: 'CPF  deve conter 11 caracteres'
+        minlength: 'CPF  deve conter 11 caracteres'
       },
       email:{
         required: 'Informe o e-mail',
@@ -63,7 +68,7 @@ export class InscricaoComponent implements OnInit, AfterViewInit {
 
     this.inscricaoForm = this.fb.group({
       nome:['',[Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
-      cpf: ['',[Validators.required, CustomValidators.rangeLength(11,11)]],
+      cpf: ['',[Validators.required, Validators.minLength(11)]],
       email: ['',[Validators.required, CustomValidators.email]],
       senha: senha,
       senhaConfirmacao: senhaConfirmacao
@@ -72,10 +77,40 @@ export class InscricaoComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     let controlBlurs: Observable<any>[] = this.formInputElements
-      .map((FormControl: ElementRef) => Observable.fromEvent(FormControl.nativeElement, 'blur'));
+      .map((FormControl: ElementRef) => fromEvent(FormControl.nativeElement, 'blur'));
 
-        Observable.merge(this.inscricaoForm.valueChanges, ...controlBlurs).debounceTime(100).subscribe(value => {
+        merge(this.inscricaoForm.valueChanges, ...controlBlurs).pipe(debounceTime(100)).subscribe(value => {
         this.displayMessage = this.genericValidator.processMessages(this.inscricaoForm);
       });
+  }
+
+  adicionarOrganizador() {
+    if (this.inscricaoForm.dirty && this.inscricaoForm) {
+      let p = Object.assign({}, this.organizador, this.inscricaoForm.value);
+      p.password = p.senha;
+      p.ConfirmPassword = p.senhaConfirmacao;
+
+
+      this.organizadorServive.registrarOrganizador(p)
+        .subscribe(
+          result => {this.onSaveComplete(result)},
+          error => {
+            this.errors = JSON.parse(error._body).errors;
+          });
+    }
+  } 
+
+   onSaveComplete(response: any): void {
+    this.inscricaoForm.reset();
+    this.errors = [];
+
+    localStorage.setItem('eio.token', response.data.access_token);
+    localStorage.setItem('eio.user', JSON.stringify(response.data.user));
+    
+   // this.router.navigateByUrl('/proximos-eventos');
+  } 
+
+  ngOnDestroy(): void {
+    //throw new Error('Methos not implemented.');
   }
 }

@@ -1,4 +1,4 @@
-import { BrowserModule, Title } from '@angular/platform-browser';
+import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -20,8 +20,15 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ListaEventosComponent } from './eventos/lista-eventos/lista-eventos.component';
 import { HomeComponent } from './home/home.component';
-import { SeoService } from './services/seo.service';
 import { InscricaoComponent } from './usuario/inscricao/inscricao.component';
+import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
+import { LoginComponent } from './usuario/login/login.component';
+import { OrganizadorService } from './usuario/organizador.service';
+import { AdicionarEventoComponent } from './eventos/adicionar-evento/adicionar-evento.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {MatDatepickerModule} from '@angular/material/datepicker';
+
 
 @NgModule({
   declarations: [
@@ -32,20 +39,25 @@ import { InscricaoComponent } from './usuario/inscricao/inscricao.component';
     ListaEventosComponent,
     MenuLoginComponent,
     HomeComponent,
-    InscricaoComponent
+    InscricaoComponent,
+    LoginComponent,
+    AdicionarEventoComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,
+    MatDatepickerModule,
+    HttpClientModule,
+    HttpModule,
     AppRoutingModule,
     CarouselModule.forRoot(),
     CollapseModule.forRoot(),
-    RouterModule.forRoot(rootRouterConfing, { useHash: false})
+    RouterModule.forRoot(rootRouterConfing, { useHash: false}),
+    BrowserAnimationsModule
   ],
   providers: [
-    Title,
-    SeoService
+    OrganizadorService
   ],
   bootstrap: [AppComponent]
 })
